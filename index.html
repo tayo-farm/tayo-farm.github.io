@@ -33,6 +33,7 @@ header .hb{margin-top:10px;display:flex;gap:8px;font-size:12px}header .hb span{b
 .mr{font-size:11px;gap:5px;margin-bottom:4px}.mr b{width:22px;font-size:10px}.mr span.c{height:26px;display:flex;align-items:center;justify-content:center;border-radius:7px;color:#6b705f;border-width:1.5px}.mr span.c.e{background:transparent;border:0}
 .mr span.w{width:48px;text-align:center;border-radius:8px;font-size:10px;padding:2px 0;flex:none}.mr span.w:empty{background:none}
 .st{font-size:11px;font-weight:700;color:#2f6b3a;margin:8px 0 4px;border-bottom:1px solid #cfd8c0}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}.tile{border:0;background:#fff;border-radius:18px;padding:16px 14px;text-align:right;font:inherit;box-shadow:0 2px 8px rgba(40,50,30,.07);min-height:92px;display:flex;flex-direction:column;gap:8px;color:#23301f}.tile b{font-size:15px}.tile span{font-size:12px;color:#7a8570}
 </style></head><body>
 <header><small id="hs"></small><h1 id="ht"></h1><div class="hb" id="hb"></div></header>
 <main id="m"></main>
@@ -47,7 +48,7 @@ const OPS=['تقليم','تربية','حشائش','ري','تسميد','رش','ت
 const CROPS=['عنب','نخيل - فسائل','نخيل - منتج','بصل','أخرى'];
 const BLOCKS=['A','B','C'];
 const WORKERS=['عامل الري','سواق الجرار','سواق عربية النيسان','عامل 1','عامل 2','عامل 3','عامل 4','عامل 5','مهندس 1','مهندس 2','المحاسب'];
-const TABS=[['home','الرئيسية','🏡'],['crops','المحاصيل','🌱'],['stores','المخازن','📦'],['money','الحسابات','💰'],['team','الفريق','👷'],['more','المزيد','☰']];
+const TABS=[['home','الرئيسية','🏡'],['crops','المحاصيل','🌱'],['stores','المخازن','📦'],['money','الحسابات','💰'],['more','المزيد','☰']];
 let S=JSON.parse(localStorage.getItem('tayo')||'null')||{plots:['قطعة 19','قطعة 20','الأسوار (جازورين)','عام'],grapes:['إيرلي سويت'],logs:[],stock:[],cash:[],missing:[],visits:[],tasks:[],fence:{done:0,total:5}};
 const save=()=>{try{localStorage.setItem('tayo',JSON.stringify(S))}catch(e){alert('المساحة امتلت. اعمل نسخة احتياطية من (المزيد) وامسح صور قديمة.')}};
 const allPlots=()=>[...GROUPS.map(g=>g[0]),...S.plots];
@@ -56,7 +57,7 @@ const today=()=>new Date().toISOString().slice(0,10);
 const num=v=>+v||0, fmt=n=>n.toLocaleString('ar-EG',{maximumFractionDigits:2});
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let tab=(location.hash.slice(1)||'home'),sub={crops:'ops',stores:'bal',money:'cash',team:'tasks',more:'main'};
-function nav(){ $('#nav').innerHTML=TABS.map(t=>`<button class="${(t[0]==tab||(tab=='land'&&t[0]=='home'))?'on':''}" onclick="go('${t[0]}')"><i>${t[2]}</i>${t[1]}</button>`).join('')}
+function nav(){ $('#nav').innerHTML=TABS.map(t=>`<button class="${(t[0]==tab||(tab=='land'&&t[0]=='home')||(tab=='sec'&&t[0]=='more')||(tab=='team'&&t[0]=='more'))?'on':''}" onclick="go('${t[0]}')"><i>${t[2]}</i>${t[1]}</button>`).join('')}
 function go(t){tab=t;render();scrollTo(0,0)}
 function chips(key,list){return `<div class="chips">`+list.map(([k,l])=>`<button class="${sub[key]==k?'on':''}" onclick="sub['${key}']='${k}';render()">${l}</button>`).join('')+`</div>`}
 function dlg(html){const d=$('#dlg');d.innerHTML=html;d.showModal()}
@@ -144,8 +145,10 @@ function addTask(){dlg(`<h2>مهمة</h2><label>العملية</label><select id
 function startTask(i){const t=S.tasks[i];t.start=Date.now();gps((p,e)=>{if(p)t.pos=p;else t.posErr=e;save();render()});save();render()}
 function endTask(i){dlg(`<h2>خلصت</h2>${photoField()}<button class="btn" onclick="finTask(${i})">تأكيد</button><button class="btn s" onclick="close()">إلغاء</button>`)}
 function finTask(i){const t=S.tasks[i];t.end=Date.now();t.photo=tmpPhoto;S.logs.push({op:t.op,crop:'',plot:t.plot,date:today(),who:t.who,note:'من المهام'});if(!t.pos)gps((p,e)=>{if(p)t.pos=p;else t.posErr=e;save();render()});save();close();render()}
-R.more=()=>{
- let h=chips('more',[['main','الأقسام'],['visits','الاستشاريين'],['fence','جازورين'],['data','بيانات']]);
+const TILES=[['المحاصيل والعمليات','عنب · نخيل · بصل · غيابات',"go('crops')"],['المخازن','استلام وصرف لكل صنف',"go('stores')"],['التكاليف','تكلفة كل قطعة وفدان',"sub.money='cost';go('money')"],['الحسابات الشهرية','تدفق نقدي بالبنود',"sub.money='cash';go('money')"],['العمال','دائم ومؤقت واليوميات',"go('team')"],['زيارات الاستشاريين','ملاحظات وتوصيات',"sub.more='visits';go('sec')"],['عمليات الأسوار (جازورين)','تقليم ونضافة 5 كم',"sub.more='fence';go('sec')"],['الخريطة والقطع','520 فدان · أكواد القطع',"go('land')"]];
+R.more=()=>`<div class="tiles">${TILES.map(t=>`<button class="tile" onclick="${t[2]}"><b>${t[0]}</b><span>${t[1]}</span></button>`).join('')}</div><div class="two" style="margin-top:4px"><button class="btn s" onclick="sub.more='main';go('sec')">أصناف العنب والقطع</button><button class="btn s" onclick="sub.more='data';go('sec')">نسخة احتياطية</button></div><div class="note">كل قسم شغال · البيانات بتتسجل على موبايلك</div>`;
+R.sec=()=>{
+ let h=chips('more',[['visits','الاستشاريين'],['fence','جازورين'],['main','الأقسام'],['data','بيانات']]);
  if(sub.more=='main')h+=`<div class="card"><div class="row"><div class="dot">●</div><div class="t">العمال</div><span class="s">${WORKERS.length}</span></div><div class="row"><div class="dot">●</div><div class="t">أصناف العنب</div><span class="s">${esc(S.grapes.join('، '))}</span></div><button class="btn s" onclick="addGrape()">＋ صنف عنب</button><button class="btn s" onclick="addPlot()">＋ قطعة / كود</button></div><div class="note">القطع: ${esc(allPlots().join('، '))}</div>`;
  if(sub.more=='visits')h+=`<button class="btn" onclick="addVisit()">＋ زيارة استشاري</button><div style="height:8px"></div>`+(S.visits.map((v,i)=>`<div class="card"><b>${esc(v.who)}</b> · ${v.date}<div class="s">${esc(v.plot)}</div><p style="margin-top:6px">${esc(v.notes)}</p><div class="s">التوصيات: ${esc(v.rec)}</div>${v.photo?`<img class="ph" src="${v.photo}">`:''}<button class="tag r" style="border:0;margin-top:6px" onclick="del('visits',${i})">حذف</button></div>`).reverse().join('')||'<div class="card s">مفيش زيارات.</div>');
  if(sub.more=='fence'){const p=S.fence.total?Math.round(S.fence.done/S.fence.total*100):0;h+=`<div class="card"><b>تقليم ونضافة جازورين (الجهتين)</b><div style="height:10px;background:#eee;border-radius:6px;margin:10px 0;overflow:hidden"><div style="height:100%;width:${p}%;background:#4f8a3c"></div></div><div class="two"><div><label>كم خلص</label><input type="number" step="any" id="fd" value="${S.fence.done}"></div><div><label>الإجمالي (كم)</label><input type="number" step="any" id="ft" value="${S.fence.total}"></div></div><button class="btn" onclick="S.fence={done:num(f('fd')),total:num(f('ft'))};save();render()">حفظ التقدم (${p}%)</button></div>`}
@@ -156,7 +159,7 @@ function addPlot(){const v=prompt('كود أو اسم القطعة (مثلا ق�
 function addVisit(){dlg(`<h2>زيارة استشاري</h2><label>الاسم</label><input id="a1"><label>القطعة / المحصول</label><select id="a2">${opt(allPlots())}</select><label>التاريخ</label><input type="date" id="a3" value="${today()}"><label>الملاحظات</label><textarea id="a4" rows="3"></textarea><label>التوصيات</label><textarea id="a5" rows="3"></textarea>${photoField()}<button class="btn" onclick="S.visits.push({who:f('a1'),plot:f('a2'),date:f('a3'),notes:f('a4'),rec:f('a5'),photo:tmpPhoto});save();close();render()">حفظ</button><button class="btn s" onclick="close()">إلغاء</button>`)}
 function exp_(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));a.download='tayo-backup-'+today()+'.json';a.click()}
 function imp(file){const r=new FileReader();r.onload=()=>{try{S=JSON.parse(r.result);save();render()}catch(e){alert('الملف غلط')}};r.readAsText(file)}
-function render(){$('#ht').textContent={home:'شركة طايو · 520 فدان',land:'خريطة الأرض',crops:'المحاصيل والعمليات',stores:'المخازن · استلام وصرف',money:'الحسابات',team:'متابعة الفريق',more:'المزيد'}[tab];$('#hs').textContent=tab=='home'?'صباح الخير يا مدير':'شركة طايو · دير مواز';$('#hb').innerHTML=tab=='home'?`<span>📍 دير مواز</span><span class="w" onclick="go('land')">افتح الخريطة</span>`:'';$('#m').innerHTML=R[tab]();nav()}
+function render(){$('#ht').textContent={home:'شركة طايو · 520 فدان',land:'خريطة الأرض',crops:'المحاصيل والعمليات',stores:'المخازن · استلام وصرف',money:'الحسابات',team:'متابعة الفريق',more:'كل أقسام التطبيق',sec:'الاستشاريون والأسوار'}[tab];$('#hs').textContent=tab=='home'?'صباح الخير يا مدير':tab=='more'?'خريطة التطبيق':'شركة طايو · دير مواز';$('#hb').innerHTML=tab=='home'?`<span>📍 دير مواز</span><span class="w" onclick="go('land')">افتح الخريطة</span>`:'';$('#m').innerHTML=R[tab]();nav()}
 render();
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script></body></html>
