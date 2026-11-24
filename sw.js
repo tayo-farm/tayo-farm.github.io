@@ -1,7 +1,7 @@
-const C='tayo-v8';
+const C='tayo-v9';
 const A=['./','./index.html','./manifest.json','./icon-192.png','./icon-512.png','./icon-maskable.png','./apple-touch-icon.png','./banner.jpg'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(C).then(c=>Promise.all(A.map(u=>c.add(new Request(u,{cache:'reload'})).catch(()=>{})))))});
-self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x)))).then(()=>self.clients.claim())));
+self.addEventListener('activate',e=>e.waitUntil((async()=>{const k=await caches.keys();const old=k.filter(x=>x!==C);await Promise.all(old.map(x=>caches.delete(x)));await self.clients.claim();if(old.length){const cs=await self.clients.matchAll({type:'window'});cs.forEach(c=>{try{c.navigate(c.url)}catch(x){}})}})()));
 const off=()=>new Response('<meta charset="utf-8"><body dir="rtl" style="font-family:sans-serif;padding:30px">مفيش إنترنت دلوقتي. افتح التطبيق تاني لما النت يرجع.</body>',{status:200,headers:{'Content-Type':'text/html;charset=utf-8'}});
 self.addEventListener('fetch',e=>{
  const r=e.request;if(r.method!=='GET')return;
