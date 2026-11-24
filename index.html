@@ -36,7 +36,7 @@ header .hb{margin-top:10px;display:flex;gap:8px;font-size:12px}header .hb span{b
 .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}.tile{border:0;background:#fff;border-radius:18px;padding:16px 14px;text-align:right;font:inherit;box-shadow:0 2px 8px rgba(40,50,30,.07);min-height:92px;display:flex;flex-direction:column;gap:8px;color:#23301f}.tile b{font-size:15px}.tile span{font-size:12px;color:#7a8570}
 .cover{display:block;width:100%;border-radius:18px;margin-bottom:12px;box-shadow:0 2px 8px rgba(40,50,30,.12)}
 #splash{position:fixed;inset:0;z-index:99999;background:#eef4e2;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s}#splash img{width:100%;max-width:560px;display:block}#splash small{margin-top:18px;color:#5b6b4f;font-size:12px}#splash.x{opacity:0;pointer-events:none}
-</style></head><body><div id="splash" onclick="hideSplash()"><img src="banner.jpg" alt="طايو · دير مواس"><small>اضغط للدخول</small></div><script>function hideSplash(){var s=document.getElementById("splash");if(s){s.classList.add("x");setTimeout(function(){s.remove()},600)}}try{if(sessionStorage.getItem("sp")){var q=document.getElementById("splash");q&&q.remove()}else{sessionStorage.setItem("sp","1");setTimeout(hideSplash,2800)}}catch(e){setTimeout(hideSplash,2800)}</script>
+</style></head><body><div id="splash" onclick="hideSplash()"><img src="banner.jpg" alt="طايو · دير مواس"><small>اضغط للدخول</small></div><script>window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();window._dip=e});window.addEventListener("appinstalled",function(){window._dip=null;try{render()}catch(x){}});function hideSplash(){var s=document.getElementById("splash");if(s){s.classList.add("x");setTimeout(function(){s.remove()},600)}}try{if(sessionStorage.getItem("sp")){var q=document.getElementById("splash");q&&q.remove()}else{sessionStorage.setItem("sp","1");setTimeout(hideSplash,2800)}}catch(e){setTimeout(hideSplash,2800)}</script>
 <header><small id="hs"></small><h1 id="ht"></h1><div class="hb" id="hb"></div></header>
 <main id="m"></main>
 <nav id="nav"></nav>
@@ -164,7 +164,7 @@ function exp_(){const a=document.createElement('a');a.href=URL.createObjectURL(n
 function imp(file){const r=new FileReader();r.onload=()=>{try{S=JSON.parse(r.result);save();render()}catch(e){alert('الملف غلط')}};r.readAsText(file)}
 function render(){$('#ht').textContent={home:'شركة طايو · 520 فدان',land:'خريطة الأرض',crops:'المحاصيل والعمليات',stores:'المخازن · استلام وصرف',money:'الحسابات',team:'متابعة الفريق',more:'كل أقسام التطبيق',sec:'الاستشاريون والأسوار'}[tab];$('#hs').textContent=tab=='home'?'صباح الخير يا مدير':tab=='more'?'خريطة التطبيق':'شركة طايو · دير مواس';$('#hb').innerHTML=tab=='home'?`<span>📍 دير مواس</span><span class="w" onclick="go('land')">افتح الخريطة</span>`:'';$('#m').innerHTML=R[tab]();nav()}
 render();
-if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(function(r){r.update()}).catch(()=>{});
 </script><script>
 /* ===== v2: screens from the mockups ===== */
 const ROLES={'المدير':null,'المهندس':['home','crops','stores','team','more','sec','land'],'المحاسب':['home','stores','money','more','land'],'العامل':['home','team','more']};
@@ -237,4 +237,11 @@ R.more=()=>`<div class="tiles">${TL.filter(t=>allowed(t[3])).map(t=>`<button cla
 if(!allowed(tab))tab='home';
 render();
 </script>
-</body></html>
+<script>
+const isApp=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+const inApp=/FBAN|FBAV|Instagram|WhatsApp|Line|Telegram|; wv\)/i.test(navigator.userAgent);
+function installApp(){if(window._dip){const d=window._dip;window._dip=null;d.prompt();d.userChoice.finally(()=>render());return}
+ dlg(`<h2>تنزيل التطبيق</h2>${inApp?'<div class="card" style="background:#fdebd0">إنت فاتح من جوه واتساب أو تطبيق تاني. دوس على التلات نقط فوق واختار "فتح في Chrome" الأول.</div>':''}<div class="s" style="line-height:1.9;font-size:13px"><b>أندرويد (Chrome):</b><br>1) دوس على التلات نقط ⋮ فوق يمين<br>2) اختار "تثبيت التطبيق" أو "إضافة إلى الشاشة الرئيسية"<br>3) دوس "تثبيت" / "إضافة"<br><br><b>آيفون (Safari):</b><br>دوس زرار المشاركة ثم "إضافة إلى الشاشة الرئيسية"<br><br>لو مفيش الاختيارين: اقفل Chrome خالص وافتح الرابط تاني وانتظر ٥ ثواني.</div><button class="btn s" onclick="close()">تمام</button>`)}
+const _hm=R.home;R.home=()=>(isApp()?'':`<div class="card" style="display:flex;align-items:center;gap:10px;background:#e6efd9"><div class="t" style="flex:1;font-size:13px"><b>نزّل التطبيق على موبايلك</b><div class="s" style="font-size:11px;color:#5b6b4f">أيقونة على الشاشة الرئيسية وبيفتح من غير متصفح</div></div><button class="btn" style="width:auto;margin:0;padding:10px 16px" onclick="installApp()">📲 تنزيل</button></div>`)+_hm();
+render();
+</script></body></html>
