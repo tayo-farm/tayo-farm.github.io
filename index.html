@@ -133,7 +133,7 @@ function gps(cb){if(!navigator.geolocation)return cb(null,'الجهاز مش ب�
 R.team=()=>{
  let h=chips('team',[['tasks','المهام'],['map','المواقع']]);
  if(sub.team=='tasks'){h+=`<button class="btn" onclick="addTask()">＋ مهمة جديدة</button><div style="height:8px"></div>`+
-  S.tasks.map((t,i)=>`<div class="card"><div class="row" style="border:0"><div class="t"><b>${esc(t.op)} · ${esc(t.plot)}</b><div class="s">${esc(t.who)} · ${t.date}${t.start?' · بدأ '+hhmm(t.start):''}${t.end?' · خلص '+hhmm(t.end):''}</div></div><span class="tag ${t.end?'':t.start?'o':'r'}">${t.end?'تمت':t.start?'شغالة':'جديدة'}</span></div>
+  S.tasks.map((t,i)=>`<div class="card"><div class="row" style="border:0"><div class="t"><b>${esc(t.op)} · ${esc(t.plot)}</b><div class="s">${t.note?esc(t.note)+" · ":""}${esc(t.who)} · ${t.date}${t.start?' · بدأ '+hhmm(t.start):''}${t.end?' · خلص '+hhmm(t.end):''}</div></div><span class="tag ${t.end?'':t.start?'o':'r'}">${t.end?'تمت':t.start?'شغالة':'جديدة'}</span></div>
   ${t.pos?`<div class="s">📍 <a href="https://www.google.com/maps?q=${t.pos.lat},${t.pos.lon}" target="_blank">${t.pos.lat}, ${t.pos.lon}</a></div>`:t.posErr?`<div class="s">${esc(t.posErr)}</div>`:''}
   ${t.photo?`<img class="ph" src="${t.photo}" style="width:100%;height:150px;margin-top:6px">`:''}
   ${!t.start?`<button class="btn s" onclick="startTask(${i})">▶ بدأت</button>`:!t.end?`<button class="btn o" onclick="endTask(${i})">✔ خلصت + صورة</button>`:''}
@@ -162,4 +162,76 @@ function imp(file){const r=new FileReader();r.onload=()=>{try{S=JSON.parse(r.res
 function render(){$('#ht').textContent={home:'شركة طايو · 520 فدان',land:'خريطة الأرض',crops:'المحاصيل والعمليات',stores:'المخازن · استلام وصرف',money:'الحسابات',team:'متابعة الفريق',more:'كل أقسام التطبيق',sec:'الاستشاريون والأسوار'}[tab];$('#hs').textContent=tab=='home'?'صباح الخير يا مدير':tab=='more'?'خريطة التطبيق':'شركة طايو · دير مواز';$('#hb').innerHTML=tab=='home'?`<span>📍 دير مواز</span><span class="w" onclick="go('land')">افتح الخريطة</span>`:'';$('#m').innerHTML=R[tab]();nav()}
 render();
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
-</script></body></html>
+</script><script>
+/* ===== v2: screens from the mockups ===== */
+const ROLES={'المدير':null,'المهندس':['home','crops','stores','team','more','sec','land'],'المحاسب':['home','stores','money','more','land'],'العامل':['home','team','more']};
+const role=()=>S.role||'المدير';
+const allowed=t=>{const r=ROLES[role()];return !r||r.includes(t)};
+const TAB5=[['home','الرئيسية','🏡'],['crops','المحاصيل','🌱'],['stores','المخازن','📦'],['money','الحسابات','💰'],['team','العمال','👷'],['more','المزيد','☰']];
+function nav(){const sh=TAB5.filter(t=>allowed(t[0])&&(t[0]!='team'||role()!='المدير'&&role()!='المحاسب'));
+ $('#nav').innerHTML=sh.map(t=>`<button class="${(t[0]==tab||(tab=='land'&&t[0]=='home')||(tab=='sec'&&t[0]=='more')||(tab=='team'&&t[0]=='more'&&!sh.some(x=>x[0]=='team')))?'on':''}" onclick="go('${t[0]}')"><i>${t[2]}</i>${t[1]}</button>`).join('')}
+/* ---- stores (screens 3 and 8) ---- */
+const lowInfo=()=>{const b=balances(),ins={};S.stock.filter(s=>s.type=='in').forEach(s=>{const k=s.cat+'|'+s.item+'|'+s.unit;ins[k]=(ins[k]||0)+num(s.qty)});
+ return Object.entries(b).map(([k,v])=>{const[c,n,u]=k.split('|');const tot=ins[k]||1;const p=Math.max(0,Math.min(100,v/tot*100));return{c,n,u,v,p,st:v<=0?['خلصان','r']:p<20?['قرب يخلص','r']:p<50?['متوسط','o']:['كفاية','']}})};
+const optSel=(a,x)=>a.map(i=>`<option ${i==x?'selected':''}>${i}</option>`).join('');
+const _addStock=addStock;
+addStock=function(t,c){_addStock(t);if(c){const e=$('#a1');if(e)e.value=c}};
+function newCat(){const v=prompt('اسم القسم الجديد');if(v&&!CATS.includes(v)){CATS.push(v);S.cats=(S.cats||[]);S.cats.push(v);save();render()}}
+if(S.cats)S.cats.forEach(c=>{if(!CATS.includes(c))CATS.push(c)});
+R.stores=()=>{
+ let h=chips('stores',[['bal','الأرصدة'],['mov','الحركة']]);
+ const li=lowInfo(),nIn=S.stock.filter(s=>s.type=='in').length,nOut=S.stock.filter(s=>s.type=='out').length,nLow=li.filter(x=>x.st[1]=='r').length;
+ if(sub.stores=='bal'){
+  h+=`<div class="grid" style="grid-template-columns:repeat(3,1fr)"><div class="kpi"><b>${nIn}</b>استلام</div><div class="kpi"><b>${nOut}</b>صرف</div><div class="kpi"><b>${nLow}</b>ناقص</div></div><h2>الأصناف</h2><div class="grid">`;
+  h+=CATS.map(c=>{const it=li.filter(x=>x.c==c);return `<div class="card" style="margin:0"><b>${c}</b><div class="two" style="margin-top:8px"><button class="btn s" style="margin:0;padding:8px;font-size:12px;white-space:nowrap" onclick="addStock('in','${c}')">+ استلام</button><button class="btn o" style="margin:0;padding:8px;font-size:12px;white-space:nowrap;background:#fdebd0;color:#b7791f" onclick="addStock('out','${c}')">- صرف</button></div><div class="s" style="margin-top:8px;font-size:11px;color:#7a8570">الرصيد: ${it.length?it.map(x=>fmt(x.v)+' '+esc(x.u)).join(' · '):'—'}</div></div>`}).join('')+`<div class="card" style="margin:0"><b>+ بند جديد</b><div class="s" style="font-size:12px;margin:8px 0">أضف أي قسم تاني</div><button class="btn s" style="margin:0;padding:8px" onclick="newCat()">إضافة قسم</button></div></div>`;
+  h+=`<h2>الأصناف وأرصدتها</h2><div class="card">`+(li.map(x=>`<div class="row"><div class="dot">●</div><div class="t">${esc(x.n)} <span class="s">${esc(x.c)}</span><div style="height:8px;background:#eee;border-radius:5px;margin-top:6px;overflow:hidden"><div style="height:100%;width:${x.p}%;background:${x.st[1]=='r'?'#c0392b':x.st[1]=='o'?'#d68910':'#4f8a3c'}"></div></div></div><span class="tag ${x.st[1]}">${x.st[0]} · ${fmt(x.v)} ${esc(x.u)}</span></div>`).join('')||'<div class="s">لسه مفيش أصناف. دوس استلام وسجّل أول صنف.</div>')+`</div>`;
+  h+=`<h2>آخر حركة</h2><div class="card">`+(S.stock.slice(-4).reverse().map(s=>`<div class="row"><div class="dot">●</div><div class="t">${s.type=='in'?'دخول':'صرف'} ${esc(s.item)} ${fmt(num(s.qty))} ${esc(s.unit)}${s.plot?' لـ '+esc(s.plot):''}<div class="s">${s.date} ${esc(s.party||'')}</div></div><span class="tag ${s.type=='in'?'':'o'}">${s.type=='in'?'دخول':'صرف'}</span></div>`).join('')||'<div class="s">مفيش حركة.</div>')+`</div>`;
+  h+=`<h2>كل عملية فيها</h2><div class="card"><div class="row"><div class="dot">●</div><div class="t"><b>الصنف والكمية</b><div class="s">وحدة · سعر الوحدة</div></div></div><div class="row"><div class="dot">●</div><div class="t"><b>الاستلام</b><div class="s">المورد · رقم الفاتورة · صورة الإيصال</div></div><span class="tag">استلام</span></div><div class="row"><div class="dot">●</div><div class="t"><b>الصرف</b><div class="s">لأنهي قطعة أو عملية · مين استلم</div></div><span class="tag o">صرف</span></div></div>`;
+ } else {h+=`<div class="card">`+(S.stock.map((s,i)=>`<div class="row">${s.photo?`<img class="ph" src="${s.photo}">`:'<div class="dot">●</div>'}<div class="t">${s.type=='in'?'استلام':'صرف'} · ${esc(s.cat)} · ${esc(s.item)} ${fmt(num(s.qty))} ${esc(s.unit)}<div class="s">${s.date} · ${esc(s.party||'')} ${s.plot?'· '+esc(s.plot):''} ${s.inv?'· فاتورة '+esc(s.inv):''}${s.price?' · '+s.price+' ج/وحدة':''}</div></div><button class="tag r" style="border:0" onclick="del('stock',${i})">حذف</button></div>`).reverse().join('')||'<div class="s">مفيش حركة.</div>')+`</div>`}
+ return h};
+/* ---- crops (screen 7) ---- */
+S.palm=S.palm||{off:'',prod:''};
+const palmOps=['عدد','تقليم','خدمة','حصاد','غرس','تقليع'];
+R.crops=()=>{
+ let h=chips('crops',[['grape','عنب'],['palm','نخيل'],['onion','بصل'],['miss','غيابات'],['ops','السجل']]);
+ const cnt=(re,op)=>S.logs.filter(l=>re.test(l.crop||'')&&l.op==op).length;
+ if(sub.crops=='grape'){const V=S.grapes,O=['ري','رش','تسميد','تقليم'];
+  h+=`<h2>عنب · العمليات حسب الصنف</h2><div class="card"><table><tr><th>الصنف</th>${O.map(o=>`<th>${o}</th>`).join('')}</tr>${V.map(v=>`<tr><td>${esc(v)}</td>${O.map(o=>`<td>${S.logs.filter(l=>(l.crop||'').includes('عنب')&&(l.crop||'').includes(v)&&l.op==o).length||'—'}</td>`).join('')}</tr>`).join('')}</table></div><button class="btn s" onclick="addGrape()">＋ صنف عنب</button><button class="btn" onclick="addLog()">＋ تسجيل عملية</button>`}
+ if(sub.crops=='palm'){h+=`<h2>نخيل مجدول</h2><div class="grid"><div class="card"><b>فسائل</b><div class="s">عدد · تقليع · غرس</div><input type="number" id="pf" placeholder="عدد" value="${S.palm.off}" onchange="S.palm.off=this.value;save()" style="margin-top:8px"><div class="s" style="margin-top:6px">عدد الفسائل</div></div><div class="card"><b>منتج</b><div class="s">تقليم · خدمة · حصاد</div><input type="number" id="pp" placeholder="عدد" value="${S.palm.prod}" onchange="S.palm.prod=this.value;save()" style="margin-top:8px"><div class="s" style="margin-top:6px">عدد النخيل المنتج</div></div></div><div class="card"><b>عمليات النخيل المسجلة</b>${S.logs.filter(l=>/نخيل/.test(l.crop||'')).reverse().map(l=>`<div class="row"><div class="dot">●</div><div class="t">${esc(l.op)} · ${esc(l.crop)}<div class="s">${l.date} ${esc(l.who||'')}</div></div></div>`).join('')||'<div class="s">مفيش عمليات لسه.</div>'}</div><button class="btn" onclick="addLog()">＋ تسجيل عملية</button>`}
+ if(sub.crops=='onion'){h+=`<h2>بصل تحت العنب</h2><div class="card">`+['قطعة 19','قطعة 20'].map(p=>`<div class="row"><div class="dot">●</div><div class="t"><b>${p}</b><div class="s">بصل مزروع تحت العنب · ${S.logs.filter(l=>l.crop=='بصل'&&l.plot==p).length} عملية</div></div><span class="tag o">متابعة</span></div>`).join('')+`</div><div class="card">`+(S.logs.filter(l=>l.crop=='بصل').reverse().map(l=>`<div class="row"><div class="dot">●</div><div class="t">${esc(l.op)} · ${esc(l.plot)}<div class="s">${l.date}</div></div></div>`).join('')||'<div class="s">مفيش عمليات بصل لسه.</div>')+`</div><button class="btn" onclick="addLog()">＋ تسجيل عملية</button>`}
+ if(sub.crops=='miss'){const by={};S.missing.forEach(m=>{by[m.plot]=by[m.plot]||{m:0,r:0};by[m.plot].m+=num(m.count)*(m.kind=='غيابات'?1:0);by[m.plot].r+=num(m.count)*(m.kind=='اتعوض'?1:0)});['قطعة 19','قطعة 20'].forEach(p=>by[p]=by[p]||{m:0,r:0});
+  h+=`<h2>غيابات الشجر لكل قطعة</h2><div class="card"><table><tr><th>القطعة</th><th>الغيابات</th><th>اتعوض</th><th>باقي</th></tr>${Object.entries(by).map(([p,v])=>`<tr><td>${esc(p)}</td><td>${v.m||'—'}</td><td>${v.r||'—'}</td><td>${v.m||v.r?v.m-v.r:'—'}</td></tr>`).join('')}</table></div><button class="btn" onclick="addMiss()">＋ تسجيل غيابات / تعويض</button>`}
+ if(sub.crops=='ops'){h+=`<button class="btn" onclick="addLog()">＋ تسجيل عملية</button><div class="card" style="margin-top:10px">`+(S.logs.map((l,i)=>`<div class="row"><div class="dot">●</div><div class="t">${esc(l.op)} · ${esc(l.crop)} · ${esc(l.plot)}<div class="s">${l.date} · ${esc(l.who||'')} ${l.note?'· '+esc(l.note):''}</div></div><button class="tag r" style="border:0" onclick="del('logs',${i})">حذف</button></div>`).reverse().join('')||'<div class="s">مفيش عمليات مسجلة.</div>')+`</div>`}
+ return h};
+sub.crops='grape';
+/* ---- money (screens 4, 9, 10) ---- */
+const _money=R.money;
+function stepM(d){const[y,m]=(window.curM||today().slice(0,7)).split('-').map(Number);const x=new Date(y,m-1+d,1);window.curM=x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0');render()}
+R.money=()=>{let h=_money();
+ h=h.replace(/<select onchange="curM=this\.value;render\(\)">[\s\S]*?<\/select>/,`<div style="display:flex;gap:8px;align-items:center;justify-content:center;margin-bottom:6px"><button class="tag" style="border:0;padding:8px 14px" onclick="stepM(-1)">›</button><span class="tag" style="background:#2f6b3a;color:#fff;padding:8px 18px">${window.curM||today().slice(0,7)}</span><button class="tag" style="border:0;padding:8px 14px" onclick="stepM(1)">‹</button></div>`);
+ if(sub.money=='cash'){const cm=window.curM||today().slice(0,7);const rows=S.cash.filter(c=>c.date.slice(0,7)==cm&&c.dir=='out');const grp={};rows.forEach(r=>{const k=r.plot||'عام';grp[k]=(grp[k]||0)+num(r.amt)});const mx=Math.max(1,...Object.values(grp));
+  h+=`<h2>المصروفات حسب القسم</h2><div class="card">`+(Object.entries(grp).map(([k,v])=>`<div class="row"><div class="t">${esc(k)}<div style="height:8px;background:#eee;border-radius:5px;margin-top:6px;overflow:hidden"><div style="height:100%;width:${v/mx*100}%;background:#4f8a3c"></div></div></div><b>${fmt(v)}</b></div>`).join('')||'<div class="s">مفيش مصروفات في الشهر ده.</div>')+`</div>`}
+ else{const tot=Math.round(520-65);h=h.replace('</table>',`<tr><td>الأرض الفارغة</td><td>${tot}</td><td>—</td><td>—</td></tr></table>`)+`<h2>التكلفة بتتجمع من</h2><div class="card"><div class="row"><div class="dot">●</div><div class="t"><b>صرف المخازن</b><div class="s">أسمدة ومبيدات وسولار (كمية × سعر الوحدة)</div></div></div><div class="row"><div class="dot">●</div><div class="t"><b>العمالة</b><div class="s">يوميات الشغل على القطعة</div></div></div><div class="row"><div class="dot">●</div><div class="t"><b>المعدات والمصروفات</b><div class="s">حسب القطعة</div></div></div></div>`}
+ return h};
+/* ---- visits + fence (screen 11) ---- */
+function convRec(i){const v=S.visits[i];dlg(`<h2>حوّل التوصيات لمهمة</h2><div class="s">${esc(v.rec||'')}</div><label>مين ينفذ</label><select id="cw">${opt(WORKERS)}</select><button class="btn" onclick="S.tasks.push({op:'توصية استشاري',plot:S.visits[${i}].plot,who:f('cw'),date:today(),note:S.visits[${i}].rec});save();close();go('team')">إنشاء المهمة</button><button class="btn s" onclick="close()">إلغاء</button>`)}
+const _sec=R.sec;
+R.sec=()=>{if(sub.more=='vf'){const a=sub.more;sub.more='visits';let v=_sec();sub.more='fence';let fz=_sec();sub.more=a;
+  v=v.replace(/<div class="chips">[\s\S]*?<\/div>/,'').replace(/(<button class="tag r"[^>]*onclick="del\('visits',(\d+)\)")/g,'<button class="tag" style="border:0;margin-top:6px" onclick="convRec($2)">حوّل لمهمة</button> $1');
+  fz=fz.replace(/<div class="chips">[\s\S]*?<\/div>/,'');return `<h2>زيارات الاستشاريين</h2>${v}<h2>عمليات الأسوار (جازورين)</h2>${fz}`}
+  return _sec()};
+/* ---- team: show team + notes on tasks ---- */
+const _team=R.team;
+R.team=()=>{let h=_team();h=h.replace(/<div class="s">\$\{esc\(t\.who\)\}/g,'$&');
+ if(sub.team=='tasks'){h=h.replace(/(<div class="card"><div class="row" style="border:0"><div class="t"><b>[^<]*<\/b>)/g,'$1');}
+ const grp=[['عامل الري',1],['سواق الجرار',1],['سواق عربية النيسان',1],['عمال',5],['مهندسين',2],['المحاسب',1]];
+ h+=`<h2>الفريق (${grp.reduce((a,g)=>a+g[1],0)})</h2><div class="card">`+grp.map(g=>`<div class="row"><div class="dot">●</div><div class="t">${g[0]}</div><span class="s">${g[1]}</span></div>`).join('')+`</div>`;return h};
+/* ---- more: 8 sections + who sees what (screens 4 and 6) ---- */
+const TL=[['المحاصيل والعمليات','عنب · نخيل · بصل · غيابات',"go('crops')",'crops'],['المخازن','استلام وصرف لكل صنف',"go('stores')",'stores'],['التكاليف','تكلفة كل قطعة وفدان',"sub.money='cost';go('money')",'money'],['الحسابات الشهرية','تدفق نقدي بالبنود',"sub.money='cash';go('money')",'money'],['العمال','دائم ومؤقت واليوميات',"go('team')",'team'],['زيارات الاستشاريين','ملاحظات وتوصيات',"sub.more='vf';go('sec')",'sec'],['عمليات الأسوار (جازورين)','تقليم ونضافة 5 كم',"sub.more='vf';go('sec')",'sec'],['الخريطة والقطع','520 فدان · أكواد القطع',"go('land')",'land']];
+const ROLEINFO={'المدير':'كل حاجة + التقارير','المهندس':'اليوميات والعمليات الفنية والمخازن','المحاسب':'المصروفات والمبيعات والمخازن','العامل':'تسجيل شغلهم بس'};
+function setRole(r){S.role=r;save();tab='more';render()}
+R.more=()=>`<div class="tiles">${TL.filter(t=>allowed(t[3])).map(t=>`<button class="tile" onclick="${t[2]}"><b>${t[0]}</b><span>${t[1]}</span></button>`).join('')}</div><h2>مين يشوف إيه؟</h2><div class="card">${Object.entries(ROLEINFO).map(([r,d])=>`<div class="row" onclick="setRole('${r}')"><div class="dot">${role()==r?'✔':'●'}</div><div class="t"><b>${r}</b><div class="s">${d}</div></div>${role()==r?'<span class="tag">الحالي</span>':''}</div>`).join('')}<div class="s" style="margin-top:6px;font-size:11px">ده بيغيّر اللي يظهر على الموبايل ده بس (من غير باسورد). الصلاحيات الحقيقية بين الموبايلات محتاجة سيرفر.</div></div><div class="two" style="margin-top:4px"><button class="btn s" onclick="sub.more='main';go('sec')">أصناف العنب والقطع</button><button class="btn s" onclick="sub.more='data';go('sec')">نسخة احتياطية</button></div><div class="note">كل قسم شغال · البيانات بتتسجل على موبايلك</div>`;
+if(!allowed(tab))tab='home';
+render();
+</script>
+</body></html>
