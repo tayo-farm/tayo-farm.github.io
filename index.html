@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ar" dir="rtl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#2f6b3a"><link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes"><title>شركة طايو</title>
+<meta name="theme-color" content="#2f6b3a"><link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon-192.png"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;700&display=swap" rel="stylesheet"><meta name="apple-mobile-web-app-capable" content="yes"><title>شركة طايو</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:'Noto Kufi Arabic','Segoe UI',Tahoma,sans-serif;background:#f4f1e8;color:#23301f;padding-bottom:90px;font-size:14px}
@@ -27,8 +27,14 @@ table{width:100%;border-collapse:collapse;font-size:12px}th{color:#7a8570;font-w
 dialog{border:0;border-radius:18px;padding:14px;width:92%;max-width:420px;margin:auto}dialog::backdrop{background:rgba(0,0,0,.4)}
 .road{background:repeating-linear-gradient(90deg,#8a8575 0 8px,#a39e8d 8px 16px);height:14px;border-radius:4px;margin:6px 0;color:#fff;font-size:9px;text-align:center}
 .mr{display:flex;gap:4px;margin-bottom:3px;align-items:center;font-size:10px}.mr b{width:20px;color:#7a8570}.mr span.c{flex:1;background:#e4e0d2;border:1px dashed #c9c3ae;border-radius:6px;text-align:center;padding:4px 0}.mr span.w{background:#2b7a8c;color:#fff;border-radius:8px;padding:2px 5px}
+.dot{width:38px;height:38px;border-radius:12px;background:#e6efd9;display:flex;align-items:center;justify-content:center;font-size:16px;color:#2f6b3a;flex:none}
+header .hb{margin-top:10px;display:flex;gap:8px;font-size:12px}header .hb span{background:rgba(255,255,255,.2);padding:5px 12px;border-radius:20px}header .hb .w{background:#fff;color:#2f6b3a;font-weight:700}
+.seg{display:flex;height:14px;border-radius:7px;overflow:hidden;margin:10px 0 8px}.lg{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:11px}.lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-left:5px}
+.mr{font-size:11px;gap:5px;margin-bottom:4px}.mr b{width:22px;font-size:10px}.mr span.c{height:26px;display:flex;align-items:center;justify-content:center;border-radius:7px;color:#6b705f;border-width:1.5px}.mr span.c.e{background:transparent;border:0}
+.mr span.w{width:48px;text-align:center;border-radius:8px;font-size:10px;padding:2px 0;flex:none}.mr span.w:empty{background:none}
+.st{font-size:11px;font-weight:700;color:#2f6b3a;margin:8px 0 4px;border-bottom:1px solid #cfd8c0}
 </style></head><body>
-<header><small id="hs">شركة طايو · دير مواز</small><h1 id="ht"></h1></header>
+<header><small id="hs"></small><h1 id="ht"></h1><div class="hb" id="hb"></div></header>
 <main id="m"></main>
 <nav id="nav"></nav>
 <dialog id="dlg"></dialog>
@@ -49,8 +55,8 @@ const opt=a=>a.map(x=>`<option>${x}</option>`).join('');
 const today=()=>new Date().toISOString().slice(0,10);
 const num=v=>+v||0, fmt=n=>n.toLocaleString('ar-EG',{maximumFractionDigits:2});
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-let tab='home',sub={crops:'ops',stores:'bal',money:'cash',team:'tasks',more:'main'};
-function nav(){ $('#nav').innerHTML=TABS.map(t=>`<button class="${t[0]==tab?'on':''}" onclick="go('${t[0]}')"><i>${t[2]}</i>${t[1]}</button>`).join('')}
+let tab=(location.hash.slice(1)||'home'),sub={crops:'ops',stores:'bal',money:'cash',team:'tasks',more:'main'};
+function nav(){ $('#nav').innerHTML=TABS.map(t=>`<button class="${(t[0]==tab||(tab=='land'&&t[0]=='home'))?'on':''}" onclick="go('${t[0]}')"><i>${t[2]}</i>${t[1]}</button>`).join('')}
 function go(t){tab=t;render();scrollTo(0,0)}
 function chips(key,list){return `<div class="chips">`+list.map(([k,l])=>`<button class="${sub[key]==k?'on':''}" onclick="sub['${key}']='${k}';render()">${l}</button>`).join('')+`</div>`}
 function dlg(html){const d=$('#dlg');d.innerHTML=html;d.showModal()}
@@ -65,20 +71,27 @@ R.home=()=>{
  const tk=S.tasks.filter(t=>!t.end).length;
  return `<div class="grid" style="grid-template-columns:repeat(3,1fr)"><div class="kpi"><b>520</b>فدان إجمالي</div><div class="kpi"><b>65</b>فدان مزروع</div><div class="kpi"><b>${tk}</b>مهام شغالة</div></div>
  <h2>المزروع (65 فدان من 520)</h2><div class="grid">${GROUPS.map(g=>`<div class="plot" style="background:${g[2]}"><b>${g[0]}</b><div class="n">${g[1]} <span>فدان</span></div></div>`).join('')}</div>
- <h2>آخر الأعمال</h2><div class="card">${S.logs.slice(-4).reverse().map(l=>`<div class="row"><div class="t">${esc(l.op)} · ${esc(l.plot)}<div class="s">${l.date} ${esc(l.who||'')}</div></div></div>`).join('')||'<div class="s">لسه مفيش. سجّل من (المحاصيل).</div>'}</div>
+ <h2>آخر الأعمال</h2><div class="card">${S.logs.slice(-4).reverse().map(l=>`<div class="row"><div class="dot">●</div><div class="t">${esc(l.op)} · ${esc(l.plot)}<div class="s">${l.date} ${esc(l.who||'')}</div></div></div>`).join('')||'<div class="s">لسه مفيش. سجّل من (المحاصيل).</div>'}</div>
+ <button class="btn s" onclick="go('land')">🗺️ خريطة الأرض وتقسيم القطع</button>`};
+R.land=()=>{const PL=[["P",30,[4.0,5.0,6.5],10],["P",29,[5.0,3.85,5.4],null],["P",28,[5.0,6.5,7.5],null],["P",27,[4.0,6.5,6.25],9],["P",26,[4.0,6.0,7.5],null],["P",25,[5.0,5.0,6.5],null],["P",24,[5.5,5.89,8.25],8],["P",23,[5.5,5.89,8.25],null],["P",22,[5.5,5.89,8.25],null],["P",21,[5.5,5.89,8.25],null],["P",20,[5.5,5.89,8.25],7],["P",19,[5.5,5.89,8.25],null],["P",18,[5.5,5.89,8.25],null],["P",17,[5.5,5.89,8.25],null],["P",16,[5.5,5.89,8.25],6],["R","R4"],["P",15,[7.7,8.3,null],null],["P",14,[5.0,5.0,null],5],["P",13,[6.5,6.5,null],4],["R","R3"],["P",12,[5.5,5.89,null],null],["P",11,[5.5,5.89,null],null],["P",10,[5.5,5.89,null],null],["P",9,[5.5,4.0,null],3],["R","R2"],["P",8,[4.0,4.5,null],null],["P",7,[5.5,5.5,null],null],["P",6,[5.5,5.5,null],null],["P",5,[5.5,5.5,null],2],["R","R1"],["P",4,[4.5,4.5,null],null],["P",3,[4.5,4.5,null],null],["P",2,[6.0,6.0,null],1],["P",1,[6.0,6.0,null],null]];const C=[['نخيل',15,'#b7791f'],['عنب إيرلي سويت',10,'#7b3f8c'],['H4 منتج',20,'#2f6b3a'],['H4 تربية',20,'#2b7a8c']];
+ let g='';PL.forEach(r=>{if(r[0]=='R'){g+=`<div class="st">شريط ${r[1]}</div>`;return}g+=`<div class="mr"><b>${r[1]}</b>${r[2].map(x=>x?`<span class="c">${x}</span>`:'<span class="c e"></span>').join('')}<span class="w">${r[3]?'بئر '+r[3]:''}</span></div>`});
+ return `<div class="grid" style="grid-template-columns:repeat(3,1fr)"><div class="kpi"><b>520</b>فدان إجمالي</div><div class="kpi"><b>65</b>فدان مزروع</div><div class="kpi"><b>10</b>آبار</div></div>
+ <div class="card" style="margin-top:10px"><div class="s" style="color:#7a8570;font-size:12px">المزروع (65 فدان)</div><div class="seg">${C.map(c=>`<i style="width:${c[1]/65*100}%;background:${c[2]}"></i>`).join('')}</div><div class="lg">${C.map(c=>`<span><i style="background:${c[2]}"></i>${c[0]} ${c[1]}</span>`).join('')}</div></div>
+ <div class="card" style="display:flex;gap:10px;align-items:center"><div style="width:46px;height:30px;border-radius:6px;flex:none;background:repeating-linear-gradient(90deg,#8a8575 0 8px,#a39e8d 8px 16px)"></div><div style="font-size:12px"><b>طريقين رئيسيين (ممرات)</b><div class="s">عرض حوالي 15 م · طول حوالي 5 كم · مش قطع زراعة، وبيكملوا مساحة الـ520 فدان تقريباً</div></div></div>
+ <h2>تقسيم القطع</h2><div class="card" style="padding:10px">${g}<div class="note">المربعات رمادي لحد ما تحدد القطعة بتاعة كل محصول · الأرقام فدان</div></div>
  <a class="btn s" style="text-align:center;text-decoration:none" href="https://www.google.com/maps/search/?api=1&query=27.639592%2C30.568271" target="_blank">🗺️ افتح موقع المزرعة على الخريطة</a>`};
 R.crops=()=>{
  let h=chips('crops',[['ops','العمليات'],['miss','الغيابات'],['onion','البصل']]);
  if(sub.crops=='ops'){
   h+=`<button class="btn" onclick="addLog()">＋ تسجيل عملية</button><div class="card" style="margin-top:10px">`+
-  (S.logs.map((l,i)=>`<div class="row"><div class="t">${esc(l.op)} · ${esc(l.crop)} · ${esc(l.plot)}<div class="s">${l.date} · ${esc(l.who||'')} ${l.note?'· '+esc(l.note):''}</div></div><button class="tag r" style="border:0" onclick="del('logs',${i})">حذف</button></div>`).reverse().join('')||'<div class="s">مفيش عمليات مسجلة.</div>')+`</div>`;
+  (S.logs.map((l,i)=>`<div class="row"><div class="dot">●</div><div class="t">${esc(l.op)} · ${esc(l.crop)} · ${esc(l.plot)}<div class="s">${l.date} · ${esc(l.who||'')} ${l.note?'· '+esc(l.note):''}</div></div><button class="tag r" style="border:0" onclick="del('logs',${i})">حذف</button></div>`).reverse().join('')||'<div class="s">مفيش عمليات مسجلة.</div>')+`</div>`;
  }
  if(sub.crops=='miss'){
   const by={};S.missing.forEach(m=>{by[m.plot]=by[m.plot]||{m:0,r:0};by[m.plot].m+=num(m.count)*(m.kind=='غيابات'?1:0);by[m.plot].r+=num(m.count)*(m.kind=='اتعوض'?1:0)});
   h+=`<button class="btn" onclick="addMiss()">＋ تسجيل غيابات / تعويض</button><div class="card" style="margin-top:10px"><table><tr><th>القطعة</th><th>الغيابات</th><th>اتعوض</th><th>باقي</th></tr>${Object.entries(by).map(([p,v])=>`<tr><td>${esc(p)}</td><td>${v.m}</td><td>${v.r}</td><td>${v.m-v.r}</td></tr>`).join('')||'<tr><td colspan=4 class="s">مفيش تسجيل لسه</td></tr>'}</table></div>`;
  }
  if(sub.crops=='onion'){
-  h+=`<div class="card"><b>بصل تحت العنب (قطعة 19 و20)</b><div class="s">سجّل عملياته من تبويب العمليات واختار المحصول "بصل".</div></div><div class="card">`+(S.logs.filter(l=>l.crop=='بصل').map(l=>`<div class="row"><div class="t">${esc(l.op)} · ${esc(l.plot)}<div class="s">${l.date}</div></div></div>`).join('')||'<div class="s">مفيش عمليات بصل لسه.</div>')+`</div>`;
+  h+=`<div class="card"><b>بصل تحت العنب (قطعة 19 و20)</b><div class="s">سجّل عملياته من تبويب العمليات واختار المحصول "بصل".</div></div><div class="card">`+(S.logs.filter(l=>l.crop=='بصل').map(l=>`<div class="row"><div class="dot">●</div><div class="t">${esc(l.op)} · ${esc(l.plot)}<div class="s">${l.date}</div></div></div>`).join('')||'<div class="s">مفيش عمليات بصل لسه.</div>')+`</div>`;
  }
  return h};
 function addLog(){dlg(`<h2>عملية جديدة</h2><label>العملية</label><select id="a1">${opt(OPS)}</select><label>المحصول</label><select id="a2">${opt(CROPS)}</select><label>الصنف (للعنب)</label><select id="a3"><option value="">-</option>${opt(S.grapes)}</select><label>القطعة</label><select id="a4">${opt(allPlots())}</select><label>التاريخ</label><input type="date" id="a5" value="${today()}"><label>مين اشتغل</label><select id="a6">${opt(WORKERS)}</select><label>ملاحظات</label><textarea id="a7" rows="2"></textarea><button class="btn" onclick="S.logs.push({op:f('a1'),crop:f('a2')+(f('a3')?' - '+f('a3'):''),plot:f('a4'),date:f('a5'),who:f('a6'),note:f('a7')});save();close();render()">حفظ</button><button class="btn s" onclick="close()">إلغاء</button>`)}
@@ -88,7 +101,7 @@ R.stores=()=>{
  let h=chips('stores',[['bal','الأرصدة'],['mov','الحركة']]);
  h+=`<div class="two"><button class="btn s" onclick="addStock('in')">＋ استلام</button><button class="btn o" onclick="addStock('out')">－ صرف</button></div><div style="height:10px"></div>`;
  if(sub.stores=='bal'){const b=balances();
-  h+=CATS.map(c=>{const it=Object.entries(b).filter(([k])=>k.startsWith(c+'|'));return `<div class="card"><b>${c}</b>${it.map(([k,v])=>{const[,n,u]=k.split('|');return `<div class="row"><div class="t">${esc(n)}</div><span class="tag ${v<=0?'r':''}">${fmt(v)} ${esc(u)}</span></div>`}).join('')||'<div class="s">لا يوجد حركة</div>'}</div>`}).join('');
+  h+=CATS.map(c=>{const it=Object.entries(b).filter(([k])=>k.startsWith(c+'|'));return `<div class="card"><b>${c}</b>${it.map(([k,v])=>{const[,n,u]=k.split('|');return `<div class="row"><div class="dot">●</div><div class="t">${esc(n)}</div><span class="tag ${v<=0?'r':''}">${fmt(v)} ${esc(u)}</span></div>`}).join('')||'<div class="s">لا يوجد حركة</div>'}</div>`}).join('');
  } else {h+=`<div class="card">`+(S.stock.map((s,i)=>`<div class="row">${s.photo?`<img class="ph" src="${s.photo}">`:''}<div class="t">${s.type=='in'?'استلام':'صرف'} · ${esc(s.cat)} · ${esc(s.item)} ${fmt(num(s.qty))} ${esc(s.unit)}<div class="s">${s.date} · ${esc(s.party||'')} ${s.plot?'· '+esc(s.plot):''} ${s.inv?'· فاتورة '+esc(s.inv):''}${s.price?' · '+s.price+' ج/وحدة':''}</div></div><button class="tag r" style="border:0" onclick="del('stock',${i})">حذف</button></div>`).reverse().join('')||'<div class="s">مفيش حركة.</div>')+`</div>`}
  return h};
 function addStock(t){const items=[...new Set(S.stock.map(s=>s.item))];
@@ -102,9 +115,9 @@ R.money=()=>{
   const rows=S.cash.filter(c=>c.date.slice(0,7)==cm);const tot=k=>rows.filter(c=>c.dir==k).reduce((a,c)=>a+num(c.amt),0);
   h+=`<select onchange="curM=this.value;render()">${ms.map(m=>`<option ${m==cm?'selected':''}>${m}</option>`).join('')}</select>
   <div class="grid" style="grid-template-columns:repeat(3,1fr);margin:10px 0"><div class="kpi"><b>${fmt(tot('in'))}</b>داخل</div><div class="kpi"><b>${fmt(tot('out'))}</b>خارج</div><div class="kpi"><b>${fmt(tot('in')-tot('out'))}</b>الصافي</div></div>
-  <div class="card"><b>المصروفات</b>${CASH.map(c=>`<div class="row"><div class="t">${c}</div><b>${fmt(rows.filter(r=>r.dir=='out'&&r.cat==c).reduce((a,r)=>a+num(r.amt),0))}</b></div>`).join('')}</div>
+  <div class="card"><b>المصروفات</b>${CASH.map(c=>`<div class="row"><div class="dot">●</div><div class="t">${c}</div><b>${fmt(rows.filter(r=>r.dir=='out'&&r.cat==c).reduce((a,r)=>a+num(r.amt),0))}</b></div>`).join('')}</div>
   <div class="two"><button class="btn" onclick="addCash('out')">－ مصروف</button><button class="btn s" onclick="addCash('in')">＋ إيراد</button></div>
-  <div class="card" style="margin-top:10px">${rows.map(r=>`<div class="row"><div class="t">${r.dir=='in'?'إيراد':esc(r.cat)}${r.plot?' · '+esc(r.plot):''}<div class="s">${r.date} ${esc(r.note||'')}</div></div><b>${fmt(num(r.amt))}</b><button class="tag r" style="border:0" onclick="del('cash',${S.cash.indexOf(r)})">حذف</button></div>`).join('')||'<div class="s">مفيش حركة في الشهر ده.</div>'}</div>`;
+  <div class="card" style="margin-top:10px">${rows.map(r=>`<div class="row"><div class="dot">●</div><div class="t">${r.dir=='in'?'إيراد':esc(r.cat)}${r.plot?' · '+esc(r.plot):''}<div class="s">${r.date} ${esc(r.note||'')}</div></div><b>${fmt(num(r.amt))}</b><button class="tag r" style="border:0" onclick="del('cash',${S.cash.indexOf(r)})">حذف</button></div>`).join('')||'<div class="s">مفيش حركة في الشهر ده.</div>'}</div>`;
  } else {
   const cost={};const add=(p,v)=>cost[p]=(cost[p]||0)+v;
   S.cash.filter(c=>c.dir=='out'&&c.plot).forEach(c=>add(c.plot,num(c.amt)));
@@ -125,18 +138,17 @@ R.team=()=>{
   ${!t.start?`<button class="btn s" onclick="startTask(${i})">▶ بدأت</button>`:!t.end?`<button class="btn o" onclick="endTask(${i})">✔ خلصت + صورة</button>`:''}
   <button class="tag r" style="border:0;margin-top:8px" onclick="del('tasks',${i})">حذف</button></div>`).reverse().join('')||'<div class="card s">مفيش مهام.</div>';
   h+=`<div class="note">الموقع بيتسجل لحظة "بدأت" ولحظة "خلصت" بس، مش تتبع مستمر. لازم العامل يعرف ده.</div>`}
- else {h+=`<div class="card">`+(S.tasks.filter(t=>t.pos).map(t=>`<div class="row"><div class="t">${esc(t.who)} · ${esc(t.op)} ${esc(t.plot)}<div class="s">${t.date}</div></div><a class="tag" target="_blank" href="https://www.google.com/maps?q=${t.pos.lat},${t.pos.lon}">خريطة</a></div>`).join('')||'<div class="s">مفيش مواقع مسجلة.</div>')+`</div>`}
+ else {h+=`<div class="card">`+(S.tasks.filter(t=>t.pos).map(t=>`<div class="row"><div class="dot">●</div><div class="t">${esc(t.who)} · ${esc(t.op)} ${esc(t.plot)}<div class="s">${t.date}</div></div><a class="tag" target="_blank" href="https://www.google.com/maps?q=${t.pos.lat},${t.pos.lon}">خريطة</a></div>`).join('')||'<div class="s">مفيش مواقع مسجلة.</div>')+`</div>`}
  return h};
 function addTask(){dlg(`<h2>مهمة</h2><label>العملية</label><select id="a1">${opt(OPS)}</select><label>القطعة</label><select id="a2">${opt(allPlots())}</select><label>مين</label><select id="a3">${opt(WORKERS)}</select><button class="btn" onclick="S.tasks.push({op:f('a1'),plot:f('a2'),who:f('a3'),date:today()});save();close();render()">إضافة</button><button class="btn s" onclick="close()">إلغاء</button>`)}
 function startTask(i){const t=S.tasks[i];t.start=Date.now();gps((p,e)=>{if(p)t.pos=p;else t.posErr=e;save();render()});save();render()}
 function endTask(i){dlg(`<h2>خلصت</h2>${photoField()}<button class="btn" onclick="finTask(${i})">تأكيد</button><button class="btn s" onclick="close()">إلغاء</button>`)}
 function finTask(i){const t=S.tasks[i];t.end=Date.now();t.photo=tmpPhoto;S.logs.push({op:t.op,crop:'',plot:t.plot,date:today(),who:t.who,note:'من المهام'});if(!t.pos)gps((p,e)=>{if(p)t.pos=p;else t.posErr=e;save();render()});save();close();render()}
 R.more=()=>{
- let h=chips('more',[['main','الأقسام'],['visits','الاستشاريين'],['fence','جازورين'],['land','الأرض'],['data','بيانات']]);
- if(sub.more=='main')h+=`<div class="card"><div class="row"><div class="t">العمال</div><span class="s">${WORKERS.length}</span></div><div class="row"><div class="t">أصناف العنب</div><span class="s">${esc(S.grapes.join('، '))}</span></div><button class="btn s" onclick="addGrape()">＋ صنف عنب</button><button class="btn s" onclick="addPlot()">＋ قطعة / كود</button></div><div class="note">القطع: ${esc(allPlots().join('، '))}</div>`;
+ let h=chips('more',[['main','الأقسام'],['visits','الاستشاريين'],['fence','جازورين'],['data','بيانات']]);
+ if(sub.more=='main')h+=`<div class="card"><div class="row"><div class="dot">●</div><div class="t">العمال</div><span class="s">${WORKERS.length}</span></div><div class="row"><div class="dot">●</div><div class="t">أصناف العنب</div><span class="s">${esc(S.grapes.join('، '))}</span></div><button class="btn s" onclick="addGrape()">＋ صنف عنب</button><button class="btn s" onclick="addPlot()">＋ قطعة / كود</button></div><div class="note">القطع: ${esc(allPlots().join('، '))}</div>`;
  if(sub.more=='visits')h+=`<button class="btn" onclick="addVisit()">＋ زيارة استشاري</button><div style="height:8px"></div>`+(S.visits.map((v,i)=>`<div class="card"><b>${esc(v.who)}</b> · ${v.date}<div class="s">${esc(v.plot)}</div><p style="margin-top:6px">${esc(v.notes)}</p><div class="s">التوصيات: ${esc(v.rec)}</div>${v.photo?`<img class="ph" src="${v.photo}">`:''}<button class="tag r" style="border:0;margin-top:6px" onclick="del('visits',${i})">حذف</button></div>`).reverse().join('')||'<div class="card s">مفيش زيارات.</div>');
  if(sub.more=='fence'){const p=S.fence.total?Math.round(S.fence.done/S.fence.total*100):0;h+=`<div class="card"><b>تقليم ونضافة جازورين (الجهتين)</b><div style="height:10px;background:#eee;border-radius:6px;margin:10px 0;overflow:hidden"><div style="height:100%;width:${p}%;background:#4f8a3c"></div></div><div class="two"><div><label>كم خلص</label><input type="number" step="any" id="fd" value="${S.fence.done}"></div><div><label>الإجمالي (كم)</label><input type="number" step="any" id="ft" value="${S.fence.total}"></div></div><button class="btn" onclick="S.fence={done:num(f('fd')),total:num(f('ft'))};save();render()">حفظ التقدم (${p}%)</button></div>`}
- if(sub.more=='land')h+=`<div class="grid" style="grid-template-columns:repeat(3,1fr)"><div class="kpi"><b>520</b>فدان</div><div class="kpi"><b>65</b>مزروع</div><div class="kpi"><b>10</b>آبار</div></div><div class="card" style="margin-top:10px"><b>الأرض 3 بلوكات A و B و C</b><div class="s">طريق بين A و B وطريق بين B و C (حوالي 15 م عرض × 5 كم).</div><div class="road">طريق</div><div class="two" style="text-align:center;margin:6px 0"><div class="kpi">A</div><div class="kpi">B</div></div><div class="road">طريق</div><div class="kpi" style="margin:6px 0">C</div></div><div class="note">تحديد كل قطعة فيها إيه هيتم من (المزيد › الأقسام › قطعة / كود) بعد ما تأكد تقسيم البلوكات.</div>`;
  if(sub.more=='data')h+=`<div class="card"><div class="s">البيانات محفوظة على الموبايل ده بس.</div><button class="btn" onclick="exp_()">نسخة احتياطية (تحميل)</button><label>استرجاع من نسخة</label><input type="file" accept=".json" onchange="imp(this.files[0])"><button class="btn r" onclick="if(confirm('تمسح كل البيانات؟')){localStorage.removeItem('tayo');location.reload()}">مسح كل البيانات</button></div>`;
  return h};
 function addGrape(){const v=prompt('اسم الصنف');if(v){S.grapes.push(v);save();render()}}
@@ -144,7 +156,7 @@ function addPlot(){const v=prompt('كود أو اسم القطعة (مثلا ق�
 function addVisit(){dlg(`<h2>زيارة استشاري</h2><label>الاسم</label><input id="a1"><label>القطعة / المحصول</label><select id="a2">${opt(allPlots())}</select><label>التاريخ</label><input type="date" id="a3" value="${today()}"><label>الملاحظات</label><textarea id="a4" rows="3"></textarea><label>التوصيات</label><textarea id="a5" rows="3"></textarea>${photoField()}<button class="btn" onclick="S.visits.push({who:f('a1'),plot:f('a2'),date:f('a3'),notes:f('a4'),rec:f('a5'),photo:tmpPhoto});save();close();render()">حفظ</button><button class="btn s" onclick="close()">إلغاء</button>`)}
 function exp_(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));a.download='tayo-backup-'+today()+'.json';a.click()}
 function imp(file){const r=new FileReader();r.onload=()=>{try{S=JSON.parse(r.result);save();render()}catch(e){alert('الملف غلط')}};r.readAsText(file)}
-function render(){$('#ht').textContent={home:'شركة طايو · 520 فدان',crops:'المحاصيل والعمليات',stores:'المخازن · استلام وصرف',money:'الحسابات',team:'متابعة الفريق',more:'المزيد'}[tab];$('#m').innerHTML=R[tab]();nav()}
+function render(){$('#ht').textContent={home:'شركة طايو · 520 فدان',land:'خريطة الأرض',crops:'المحاصيل والعمليات',stores:'المخازن · استلام وصرف',money:'الحسابات',team:'متابعة الفريق',more:'المزيد'}[tab];$('#hs').textContent=tab=='home'?'صباح الخير يا مدير':'شركة طايو · دير مواز';$('#hb').innerHTML=tab=='home'?`<span>📍 دير مواز</span><span class="w" onclick="go('land')">افتح الخريطة</span>`:'';$('#m').innerHTML=R[tab]();nav()}
 render();
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script></body></html>
