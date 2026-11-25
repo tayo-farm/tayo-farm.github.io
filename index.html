@@ -374,7 +374,7 @@ setInterval(()=>{if(!document.hidden)syncNow(false)},6000);setInterval(()=>{if(!
 if(syCode())setTimeout(()=>syncNow(true),800);
 
 render();
-</script><script>['touchstart','touchmove'].forEach(function(e){document.addEventListener(e,function(x){if(x.touches&&x.touches.length>1)x.preventDefault()},{passive:false})});document.addEventListener('wheel',function(x){if(x.ctrlKey)x.preventDefault()},{passive:false});document.getElementById('dlg').addEventListener('click',function(e){if(e.target===this)closeD()});["gesturestart","gesturechange","dblclick"].forEach(function(e){document.addEventListener(e,function(x){x.preventDefault()},{passive:false})});</script><div id="ver" style="position:fixed;top:5px;left:6px;z-index:9999;font:11px sans-serif;background:rgba(0,0,0,.55);color:#fff;padding:3px 9px;border-radius:12px;zoom:1.2">v44 · اضغط للتحديث</div><script>(function(){var V=44;function purge(){var p=[];try{p.push(navigator.serviceWorker.getRegistrations().then(function(r){return Promise.all(r.map(function(x){return x.unregister()}))}))}catch(e){}try{p.push(caches.keys().then(function(k){return Promise.all(k.map(function(x){return caches.delete(x)}))}))}catch(e){}return Promise.all(p).then(function(){location.replace(location.pathname+'?r='+Date.now())})}
+</script><script>['touchstart','touchmove'].forEach(function(e){document.addEventListener(e,function(x){if(x.touches&&x.touches.length>1)x.preventDefault()},{passive:false})});document.addEventListener('wheel',function(x){if(x.ctrlKey)x.preventDefault()},{passive:false});document.getElementById('dlg').addEventListener('click',function(e){if(e.target===this)closeD()});["gesturestart","gesturechange","dblclick"].forEach(function(e){document.addEventListener(e,function(x){x.preventDefault()},{passive:false})});</script><div id="ver" style="position:fixed;top:5px;left:6px;z-index:9999;font:11px sans-serif;background:rgba(0,0,0,.55);color:#fff;padding:3px 9px;border-radius:12px;zoom:1.2">v45 · اضغط للتحديث</div><script>(function(){var V=45;function purge(){var p=[];try{p.push(navigator.serviceWorker.getRegistrations().then(function(r){return Promise.all(r.map(function(x){return x.unregister()}))}))}catch(e){}try{p.push(caches.keys().then(function(k){return Promise.all(k.map(function(x){return caches.delete(x)}))}))}catch(e){}return Promise.all(p).then(function(){location.replace(location.pathname+'?r='+Date.now())})}
 document.getElementById('ver').addEventListener('click',purge);
 try{fetch('sw.js?c='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=/tayo-v(\d+)/.exec(t);if(m&&+m[1]!==V&&!sessionStorage.getItem('rf'+m[1])){sessionStorage.setItem('rf'+m[1],'1');purge()}}).catch(function(){})}catch(e){}})();</script><script>
 function appMenu(){dlg('<h2>التطبيقات</h2><div class="apps">'+TABS.map(t=>`<button onclick="dlg0();go('${t[0]}')"><i>${t[2]}</i>${t[1]}</button>`).join('')+'</div>')}
@@ -507,5 +507,21 @@ R.money=()=>{let h=_m5();if(sub.money!='cost')return h;
  const rows=YCODES.map(c=>({c,q:yardCalc(c)})).filter(x=>x.q.d||x.q.r||x.q.i&&(x.q.d||x.q.r));
  const T=rows.reduce((a,x)=>({r:a.r+x.q.r,d:a.d+x.q.d,i:a.i+x.q.i}),{r:0,d:0,i:0});
  h+=`<h2>صافي الربح لكل حوشة</h2><div class="card" style="overflow:auto">`+(rows.length?`<table><tr><th>الحوشة</th><th>فدان</th><th>إيراد</th><th>مباشرة</th><th>غير مباشرة</th><th>الصافي</th><th>للفدان</th></tr>${rows.map(({c,q})=>`<tr onclick="yardSheet('${c}')"><td>${c}</td><td>${q.fd}</td><td>${fmtM(q.r)}</td><td>${fmtM(q.d)}</td><td>${fmtM(q.i)}</td><td><b style="color:${q.net<0?'#dc3545':'#198754'}">${fmtM(q.net)}</b></td><td>${fmtM(q.net/q.fd)}</td></tr>`).join('')}<tr><td><b>الإجمالي</b></td><td></td><td>${fmtM(T.r)}</td><td>${fmtM(T.d)}</td><td>${fmtM(T.i)}</td><td><b>${fmtM(T.r-T.d-T.i)}</b></td><td></td></tr></table>`:'<div class="s">لسه مفيش إيراد ولا تكلفة مربوطة بحوشة. سجّل البيع واختار كود الحوشة.</div>')+`</div><div class="note">دوس على الحوشة تفتح كشفها. الصافي = إيراد المبيعات − التكلفة المباشرة − نصيبها من غير المباشرة.</div>`;return h};
+</script>
+<script>
+/* v45: profit per crop */
+const cropKey=x=>x=='عنب'?'عنب':(x&&x.indexOf('نخيل')==0)?'نخيل':x=='بصل'?'بصل':'أخرى';
+const cropOfPlot=p=>YARDS[p]?cropKey(YARDS[p][1]=='نخيل مجدول'?'نخيل':YARDS[p][1]):p==GROUPS[0][0]?'نخيل':p==GROUPS[1][0]?'عنب':'أخرى';
+function cropCalc(){const C={};const g=k=>C[k]=C[k]||{r:0,ru:0,d:0};
+ S.sales.forEach(x=>{const v=num(x.qty)*num(x.price),k=cropKey(x.item);g(k).r+=v;if(!x.yard)g(k).ru+=v});
+ S.cash.filter(c=>c.dir=='out'&&(c.yard||isDirC(c))).forEach(c=>{g(cropOfPlot(c.yard||c.plot)).d+=num(c.amt)});
+ S.stock.filter(s=>s.type=='out'&&s.plot&&s.plot!='عام').forEach(s=>{g(cropOfPlot(s.plot)).d+=num(s.qty)*num(s.price)});
+ const ind=indList().reduce((a,x)=>a+x.amt,0),b=BASE(),fd={'نخيل':GROUPS[0][1],'عنب':GROUPS[1][1]};
+ Object.keys(fd).forEach(k=>g(k));
+ Object.entries(C).forEach(([k,o])=>{o.i=fd[k]?ind*fd[k]/b:0;o.fd=fd[k]||0;o.net=o.r-o.d-o.i});return C}
+const _m6=R.money;
+R.money=()=>{let h=_m6();if(sub.money!='cost')return h;const C=cropCalc(),E=Object.entries(C);
+ const T=E.reduce((a,[k,o])=>({r:a.r+o.r,d:a.d+o.d,i:a.i+o.i}),{r:0,d:0,i:0});
+ h+=`<h2>صافي الربح لكل محصول</h2><div class="card" style="overflow:auto;padding:6px"><table style="font-size:11px"><tr><th>المحصول</th><th>الصافي</th><th>إيراد</th><th>مباشر</th><th>غير مباشر</th></tr>${E.map(([k,o])=>`<tr><td>${k}${o.fd?`<div class="s">${o.fd} فدان</div>`:''}</td><td><b style="color:${o.net<0?'#dc3545':'#198754'}">${fmtM(o.net)}</b></td><td>${fmtM(o.r)}${o.ru?`<div class="s">بدون حوشة ${fmtM(o.ru)}</div>`:''}</td><td>${fmtM(o.d)}</td><td>${fmtM(o.i)}</td></tr>`).join('')}<tr><td><b>الإجمالي</b></td><td><b>${fmtM(T.r-T.d-T.i)}</b></td><td>${fmtM(T.r)}</td><td>${fmtM(T.d)}</td><td>${fmtM(T.i)}</td></tr></table></div><div class="note">أي بيع بيتحسب على محصوله حتى لو من غير كود حوشة (وبيظهر "بدون حوشة"). التكلفة المباشرة = مصروفات وصرف مربوطة بحوشة أو قطعة المحصول. غير المباشرة بتتوزع بالفدان على العنب والنخيل بس، فالبصل وغيره من غير نصيب.</div>`;return h};
 </script>
 </body></html>
