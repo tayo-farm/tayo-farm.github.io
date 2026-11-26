@@ -1,4 +1,4 @@
-const C='tayo-v51';
+const C='tayo-v52';
 const A=['./','./index.html','./manifest.json','./icon-192.png','./icon-512.png','./icon-maskable.png','./apple-touch-icon.png','./banner.jpg'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(C).then(c=>Promise.all(A.map(u=>c.add(new Request(u,{cache:'reload'})).catch(()=>{})))))});
 self.addEventListener('activate',e=>e.waitUntil((async()=>{const k=await caches.keys();const old=k.filter(x=>x!==C);await Promise.all(old.map(x=>caches.delete(x)));await self.clients.claim();if(old.length){const cs=await self.clients.matchAll({type:'window'});cs.forEach(c=>{try{c.navigate(c.url)}catch(x){}})}})()));
